@@ -12,7 +12,7 @@ class MainRepository @Inject constructor(
 ) {
     suspend fun callCryptoList(page: Int) = api.callCryptoList(page)
 
-    suspend fun fetchAll() = db.fetchAll()
+    fun fetchAll() = db.fetchAll()
 
     suspend fun saveCryptoList(cryptoList: List<Crypto>) = db.saveAll(cryptoList)
 }

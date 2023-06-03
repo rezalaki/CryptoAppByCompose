@@ -2,6 +2,7 @@ package com.rezalaki.cryptobycompose.di
 
 import android.content.Context
 import androidx.room.Room
+import com.rezalaki.cryptobycompose.db.DatabaseConverters
 import com.rezalaki.cryptobycompose.db.MainDao
 import com.rezalaki.cryptobycompose.db.MainDatabase
 import com.rezalaki.cryptobycompose.utils.Constants
@@ -23,6 +24,7 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context) =
         Room.databaseBuilder(context, MainDatabase::class.java, Constants.DB_NAME)
             .fallbackToDestructiveMigration()
+            .addTypeConverter(DatabaseConverters::class)
             .build()
 
     @Provides

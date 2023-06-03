@@ -1,12 +1,12 @@
 package com.rezalaki.cryptobycompose.models
 
-import kotlinx.parcelize.Parcelize
-import android.os.Parcelable
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import com.rezalaki.cryptobycompose.utils.Constants
 
-@Parcelize
+@Entity(tableName = Constants.TABLE_CRYPTO)
 data class Crypto(
-
 	@field:SerializedName("price_change_percentage_24h")
 	val priceChangePercentage24h: Double? = null,
 
@@ -49,8 +49,9 @@ data class Crypto(
 	@field:SerializedName("market_cap_change_percentage_24h")
 	val marketCapChangePercentage24h: Double? = null,
 
+	@PrimaryKey
 	@field:SerializedName("id")
-	val id: String? = null,
+	val id: String = "",
 
 	@field:SerializedName("ath_change_percentage")
 	val athChangePercentage: Double? = null,
@@ -84,9 +85,9 @@ data class Crypto(
 
 	@field:SerializedName("current_price")
 	val currentPrice: Double? = null
-) : Parcelable
+)
 
-@Parcelize
+
 data class Roi(
 
 	@field:SerializedName("times")
@@ -97,4 +98,4 @@ data class Roi(
 
 	@field:SerializedName("currency")
 	val currency: String? = null
-) : Parcelable
+)

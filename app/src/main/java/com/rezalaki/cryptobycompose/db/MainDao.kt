@@ -1,5 +1,6 @@
 package com.rezalaki.cryptobycompose.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MainDao {
     @Query("SELECT * FROM ${Constants.TABLE_CRYPTO}")
-    suspend fun fetchAll(): Flow<List<Crypto>>
+    fun fetchAll(): LiveData<List<Crypto>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun saveAll(cryptoList: List<Crypto>)
