@@ -50,8 +50,9 @@ android {
 }
 
 dependencies {
-    // ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
+    // ViewModel and Lifecycles
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1"
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
     // Image Loader

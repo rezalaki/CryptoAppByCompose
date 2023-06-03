@@ -7,5 +7,5 @@ object Constants {
 
     const val DEFAULT_NETWORK_TIMEOUT_SECOND = 20L
 
-    const val API_BASE_URL = "https://api.coingecko.com/api/v3/"
+    const val API_BASE_URL = "https://api.coingecko.com/api/v3/coins/"
 }

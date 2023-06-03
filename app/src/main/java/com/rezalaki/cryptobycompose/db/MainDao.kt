@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MainDao {
     @Query("SELECT * FROM ${Constants.TABLE_CRYPTO}")
-    fun fetchAll(): LiveData<List<Crypto>>
+    fun fetchAll(): Flow<List<Crypto>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun saveAll(cryptoList: List<Crypto>)

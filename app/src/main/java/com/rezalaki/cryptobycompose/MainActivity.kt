@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.rezalaki.cryptobycompose.ui.screens.main.MainViewModel
 import com.rezalaki.cryptobycompose.ui.theme.CryptoByComposeTheme
 import com.rezalaki.cryptobycompose.ui.theme.colorBackground
 import com.rezalaki.cryptobycompose.ui.theme.colorBlack
@@ -47,12 +49,15 @@ import com.rezalaki.cryptobycompose.ui.theme.colorGrayDark
 import com.rezalaki.cryptobycompose.ui.theme.colorGreen
 import com.rezalaki.cryptobycompose.ui.theme.colorRed
 import com.rezalaki.cryptobycompose.ui.theme.colorWhite
+import androidx.lifecycle.viewmodel.compose.viewModel
+import dagger.hilt.android.AndroidEntryPoint
+import androidx.lifecycle.viewmodel.compose.*
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        
 
         setContent {
             CryptoByComposeTheme {
@@ -71,8 +76,13 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-private fun Screen() {
-    Scaffold() {
+private fun Screen(
+    viewModel: MainViewModel = viewModel()
+) {
+    viewModel.callApi()
+
+
+    Scaffold {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -172,6 +182,7 @@ fun CryptoItem() {
                     .clip(CircleShape)
                     .width(90.dp)
                     .height(90.dp)
+                    .padding(all = 2.dp)
                     .background(Color.White)
             )
         }

@@ -14,7 +14,7 @@ data class Crypto(
 	val symbol: String? = null,
 
 	@field:SerializedName("total_volume")
-	val totalVolume: Int? = null,
+	val totalVolume: Double? = null,
 
 	@field:SerializedName("price_change_24h")
 	val priceChange24h: Double? = null,
@@ -23,7 +23,7 @@ data class Crypto(
 	val atlChangePercentage: Double? = null,
 
 	@field:SerializedName("market_cap_rank")
-	val marketCapRank: Int? = null,
+	val marketCapRank: Double? = null,
 
 	@field:SerializedName("atl_date")
 	val atlDate: String? = null,
@@ -32,10 +32,10 @@ data class Crypto(
 	val roi: Roi? = null,
 
 	@field:SerializedName("market_cap_change_24h")
-	val marketCapChange24h: Int? = null,
+	val marketCapChange24h: Double? = null,
 
 	@field:SerializedName("market_cap")
-	val marketCap: Int? = null,
+	val marketCap: Double? = null,
 
 	@field:SerializedName("ath")
 	val ath: Double? = null,
@@ -69,10 +69,10 @@ data class Crypto(
 	val lastUpdated: String? = null,
 
 	@field:SerializedName("total_supply")
-	val totalSupply: Int? = null,
+	val totalSupply: Double? = null,
 
 	@field:SerializedName("fully_diluted_valuation")
-	val fullyDilutedValuation: Long? = null,
+	val fullyDilutedValuation: Double? = null,
 
 	@field:SerializedName("name")
 	val name: String? = null,
@@ -81,7 +81,7 @@ data class Crypto(
 	val low24h: Double? = null,
 
 	@field:SerializedName("max_supply")
-	val maxSupply: Int? = null,
+	val maxSupply: Double? = null,
 
 	@field:SerializedName("current_price")
 	val currentPrice: Double? = null
