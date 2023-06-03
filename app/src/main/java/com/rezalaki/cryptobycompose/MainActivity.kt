@@ -16,11 +16,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,6 +31,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -40,6 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.*
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rezalaki.cryptobycompose.models.Crypto
@@ -55,9 +59,9 @@ import com.rezalaki.cryptobycompose.ui.theme.colorRed
 import com.rezalaki.cryptobycompose.ui.theme.colorWhite
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -81,13 +85,16 @@ class MainActivity : ComponentActivity() {
 private fun Screen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
-    viewModel.callApi()
-    val dataList = viewModel.data.observeAsState()
+
+    val cryptoList = viewModel.callCryptoApi()?.collectAsLazyPagingItems()
     val showProgressBar = viewModel.showProgressbar.observeAsState()
+    val errorCallingApi = viewModel.errorCallingApi.observeAsState()
 
     Scaffold(
         modifier = Modifier.background(colorBackground)
     ) {
+        /*
+        // API is just called
         if (showProgressBar.value!!) {
             Column(
                 modifier = Modifier
@@ -99,51 +106,201 @@ private fun Screen(
                 LoadingAnimation()
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Loading...", fontSize = 22.sp, color = Purple40,
+                    text = "Connecting to server...", fontSize = 22.sp, color = Purple40,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
             }
-        } else {
-            if(dataList.value == null){
-                Text(
-                    text = "error in receiving date ...", fontSize = 32.sp, color = Purple40,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.background(colorBackground)
+        }
+        else { // API has gotten its response [no matter 200 or NOT]
+            if (errorCallingApi.value!!) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    dataList.value?.let {
-                        items(it) { crypto ->
-                            CryptoItem(crypto)
+                    Text(
+                        text = "error in receiving date... \nSomething went wrong :(",
+                        fontSize = 32.sp, color = Purple40,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn {
+                    items(items = cryptoList!!) { crypto ->
+                        CryptoItem(crypto = crypto!!)
+                    }
+                    when (cryptoList.loadState.append) {
+                        is LoadState.Error -> {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Error while loading more data...",
+                                        fontSize = 16.sp,
+                                        color = colorRed,
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
                         }
+
+                        is LoadState.Loading -> {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    LoadingAnimation(circleSize = 16.dp)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Loading more data... ",
+                                        fontSize = 16.sp,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                }
+                            }
+                        }
+
+                        else -> {}
                     }
                 }
             }
+        }
+            */
+        LazyColumn {
+            items(items = cryptoList!!) { crypto ->
+                CryptoItem(crypto = crypto!!)
+            }
 
+            // first loading
+            when (cryptoList.loadState.refresh) { //FIRST LOAD
+                is LoadState.Error -> {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .background(Color.Gray),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .padding(8.dp),
+                                text = "unable to find server",
+                                color = Color.Red,
+                                fontSize = 30.sp
+                            )
+                        }
+                    }
+                }
+                is LoadState.Loading -> { // Loading UI
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillParentMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .padding(8.dp),
+                                text = "connectioning to server..."
+                            )
+
+                            CircularProgressIndicator(color = Color.Red)
+                        }
+                    }
+                }
+                else -> {}
+            }
+
+            // when loading more
+            when (cryptoList.loadState.append) {
+                is LoadState.Error -> {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error while loading more data :/",
+                                fontSize = 16.sp,
+                                color = colorRed,
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                is LoadState.Loading -> {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            LoadingAnimation(circleSize = 16.dp)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Loading more... ",
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
+            }
         }
     }
 }
 
 @Composable
 fun CryptoItem(crypto: Crypto) {
-    val currentPrice = if (crypto.currentPrice!!.toString().length > 5) {
+    // fix some null values via my fake data --> start
+    val currentPrice = if (crypto.currentPrice == null) {
+        "5.05"
+    } else if (crypto.currentPrice!!.toString().length > 5) {
         crypto.currentPrice!!.toString().take(6)
     } else {
         crypto.currentPrice!!.toString()
     }
-    val low24 = if (crypto.low24h!!.toString().length > 5) {
+    val low24 = if (crypto.low24h == null) {
+        "2.02"
+    } else if (crypto.low24h!!.toString().length > 5) {
         crypto.low24h!!.toString().take(6)
     } else {
         crypto.low24h!!.toString()
     }
-    val high24 = if (crypto.high24h!!.toString().length > 5) {
+    val high24 = if (crypto.high24h == null) {
+        "8.08"
+    } else if (crypto.high24h!!.toString().length > 5) {
         crypto.currentPrice!!.toString().take(6)
     } else {
         crypto.currentPrice!!.toString()
     }
+    // fix some null values via my fake data --> end
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -178,7 +335,7 @@ fun CryptoItem(crypto: Crypto) {
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = crypto.low24h.toString(),
+                        text = low24,
                         modifier = Modifier
                             .weight(0.3F)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -188,7 +345,7 @@ fun CryptoItem(crypto: Crypto) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = crypto.currentPrice.toString(),
+                        text = currentPrice,
                         modifier = Modifier
                             .weight(0.4F)
                             .padding(
@@ -201,7 +358,7 @@ fun CryptoItem(crypto: Crypto) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = crypto.high24h.toString(),
+                        text = high24,
                         modifier = Modifier
                             .weight(0.3F)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
