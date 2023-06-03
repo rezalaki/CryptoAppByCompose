@@ -41,7 +41,7 @@ data class Crypto(
 	val ath: Double? = null,
 
 	@field:SerializedName("high_24h")
-	val high24h: Double? = null,
+	var high24h: Double? = null,
 
 	@field:SerializedName("atl")
 	val atl: Double? = null,
@@ -78,13 +78,13 @@ data class Crypto(
 	val name: String? = null,
 
 	@field:SerializedName("low_24h")
-	val low24h: Double? = null,
+	var low24h: Double? = null,
 
 	@field:SerializedName("max_supply")
 	val maxSupply: Double? = null,
 
 	@field:SerializedName("current_price")
-	val currentPrice: Double? = null
+	var currentPrice: Double? = null
 )
 
 

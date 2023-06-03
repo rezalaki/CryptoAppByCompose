@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -27,31 +27,33 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.*
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.rezalaki.cryptobycompose.models.Crypto
+import com.rezalaki.cryptobycompose.ui.components.LoadingAnimation
 import com.rezalaki.cryptobycompose.ui.screens.main.MainViewModel
 import com.rezalaki.cryptobycompose.ui.theme.CryptoByComposeTheme
+import com.rezalaki.cryptobycompose.ui.theme.Purple40
 import com.rezalaki.cryptobycompose.ui.theme.colorBackground
 import com.rezalaki.cryptobycompose.ui.theme.colorBlack
 import com.rezalaki.cryptobycompose.ui.theme.colorGrayDark
 import com.rezalaki.cryptobycompose.ui.theme.colorGreen
 import com.rezalaki.cryptobycompose.ui.theme.colorRed
 import com.rezalaki.cryptobycompose.ui.theme.colorWhite
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.lifecycle.viewmodel.compose.*
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -77,27 +79,71 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun Screen(
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     viewModel.callApi()
+    val dataList = viewModel.data.observeAsState()
+    val showProgressBar = viewModel.showProgressbar.observeAsState()
 
+    Scaffold(
+        modifier = Modifier.background(colorBackground)
+    ) {
+        if (showProgressBar.value!!) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colorBackground),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LoadingAnimation()
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Loading...", fontSize = 22.sp, color = Purple40,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            if(dataList.value == null){
+                Text(
+                    text = "error in receiving date ...", fontSize = 32.sp, color = Purple40,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.background(colorBackground)
+                ) {
+                    dataList.value?.let {
+                        items(it) { crypto ->
+                            CryptoItem(crypto)
+                        }
+                    }
+                }
+            }
 
-    Scaffold {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorBackground)
-        ) {
-            CryptoItem()
-            CryptoItem()
-            CryptoItem()
         }
     }
 }
 
-@Preview()
 @Composable
-fun CryptoItem() {
+fun CryptoItem(crypto: Crypto) {
+    val currentPrice = if (crypto.currentPrice!!.toString().length > 5) {
+        crypto.currentPrice!!.toString().take(6)
+    } else {
+        crypto.currentPrice!!.toString()
+    }
+    val low24 = if (crypto.low24h!!.toString().length > 5) {
+        crypto.low24h!!.toString().take(6)
+    } else {
+        crypto.low24h!!.toString()
+    }
+    val high24 = if (crypto.high24h!!.toString().length > 5) {
+        crypto.currentPrice!!.toString().take(6)
+    } else {
+        crypto.currentPrice!!.toString()
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,19 +165,20 @@ fun CryptoItem() {
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "Bitcoin",
+                    crypto.name.toString(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp),
                     textAlign = TextAlign.Center,
                     fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colorBlack
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "24,000",
+                        text = crypto.low24h.toString(),
                         modifier = Modifier
                             .weight(0.3F)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -141,7 +188,7 @@ fun CryptoItem() {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "26,000",
+                        text = crypto.currentPrice.toString(),
                         modifier = Modifier
                             .weight(0.4F)
                             .padding(
@@ -154,7 +201,7 @@ fun CryptoItem() {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "30,000",
+                        text = crypto.high24h.toString(),
                         modifier = Modifier
                             .weight(0.3F)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -172,7 +219,7 @@ fun CryptoItem() {
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data("https://assets.coingecko.com/coins/images/1231/large/Blox_Staking_Logo_2.png?1609117544")
+                    .data(crypto.image)
                     .crossfade(true)
                     .build(),
                 placeholder = painterResource(R.drawable.ic_dollar),
@@ -182,8 +229,7 @@ fun CryptoItem() {
                     .clip(CircleShape)
                     .width(90.dp)
                     .height(90.dp)
-                    .padding(all = 2.dp)
-                    .background(Color.White)
+                    .background(colorWhite)
             )
         }
     }
