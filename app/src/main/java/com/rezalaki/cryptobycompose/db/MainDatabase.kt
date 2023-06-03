@@ -10,5 +10,5 @@ import com.rezalaki.cryptobycompose.models.Crypto
     entities = [Crypto::class]
 )
 abstract class MainDatabase: RoomDatabase() {
-    abstract fun mainDao()
+    abstract fun mainDao(): MainDao
 }

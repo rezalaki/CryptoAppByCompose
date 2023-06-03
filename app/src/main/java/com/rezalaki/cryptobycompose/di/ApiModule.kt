@@ -30,7 +30,7 @@ object ApiModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(client: OkHttpClient) =
+    fun provideRetrofit(client: OkHttpClient): Apis =
         Retrofit.Builder()
             .baseUrl(Constants.API_BASE_URL)
             .client(client)
