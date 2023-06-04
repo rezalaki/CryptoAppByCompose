@@ -242,9 +242,9 @@ fun CryptoItem(crypto: Crypto) {
     val high24 = if (crypto.high24h == null) {
         "8.08"
     } else if (crypto.high24h!!.toString().length > 5) {
-        crypto.currentPrice!!.toString().take(6)
+        crypto.high24h!!.toString().take(6)
     } else {
-        crypto.currentPrice!!.toString()
+        crypto.high24h!!.toString()
     }
     // fix some null values via my fake data --> end
 
