@@ -2,6 +2,7 @@ package com.rezalaki.cryptobycompose.repositorys
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.flatMap
 import androidx.room.Dao
 import com.rezalaki.cryptobycompose.db.MainDao
 import com.rezalaki.cryptobycompose.models.Crypto
@@ -21,11 +22,9 @@ class MainRepository @Inject constructor(
     fun callCryptoList() = Pager(
         config = PagingConfig(pageSize = API_PAGING_SIZE),
         pagingSourceFactory = {
-            ApiPagingSource(api)
+            ApiPagingSource(api, db)
         }
     ).flow.flowOn(Dispatchers.IO)
 
     fun fetchAllFromDatabase() = db.fetchAll()
-
-    suspend fun saveCryptoList(cryptoList: List<Crypto>) = db.saveAll(cryptoList)
 }

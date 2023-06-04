@@ -2,6 +2,7 @@ package com.rezalaki.cryptobycompose
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -24,10 +26,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +56,6 @@ import com.rezalaki.cryptobycompose.models.Crypto
 import com.rezalaki.cryptobycompose.ui.components.LoadingAnimation
 import com.rezalaki.cryptobycompose.ui.screens.main.MainViewModel
 import com.rezalaki.cryptobycompose.ui.theme.CryptoByComposeTheme
-import com.rezalaki.cryptobycompose.ui.theme.Purple40
 import com.rezalaki.cryptobycompose.ui.theme.colorBackground
 import com.rezalaki.cryptobycompose.ui.theme.colorBlack
 import com.rezalaki.cryptobycompose.ui.theme.colorGrayDark
@@ -58,6 +63,7 @@ import com.rezalaki.cryptobycompose.ui.theme.colorGreen
 import com.rezalaki.cryptobycompose.ui.theme.colorRed
 import com.rezalaki.cryptobycompose.ui.theme.colorWhite
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -80,200 +86,171 @@ class MainActivity : ComponentActivity() {
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @Composable
 private fun Screen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    val cryptoList = viewModel.callCryptoApi()?.collectAsLazyPagingItems()
-    val showProgressBar = viewModel.showProgressbar.observeAsState()
-    val errorCallingApi = viewModel.errorCallingApi.observeAsState()
+    val cryptoListFromApi = viewModel.callCryptoApi().collectAsLazyPagingItems()
+
+    val showCachedData = viewModel.showCachedData.observeAsState()
+    val cryptoListFromCache = viewModel.cashedCryptoList.observeAsState()
 
     Scaffold(
-        modifier = Modifier.background(colorBackground)
+        modifier = Modifier.background(colorBackground),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) {
-        /*
-        // API is just called
-        if (showProgressBar.value!!) {
-            Column(
+        // get data from online API
+        if (showCachedData.value == false) {
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colorBackground),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(colorBackground)
             ) {
-                LoadingAnimation()
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Connecting to server...", fontSize = 22.sp, color = Purple40,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                items(items = cryptoListFromApi) { crypto ->
+                    CryptoItem(crypto = crypto!!)
+                }
+
+                // first loading
+                when (cryptoListFromApi.loadState.refresh) {
+                    is LoadState.Error -> {
+                        viewModel.showCachedData.postValue(true)
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillParentMaxSize()
+                                    .background(colorBackground),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Text(
+                                    modifier = Modifier
+                                        .padding(8.dp),
+                                    text = "unable to find server",
+                                    color = Color.Black,
+                                    fontSize = 30.sp
+                                )
+                            }
+                        }
+                    }
+
+                    is LoadState.Loading -> { // Loading UI
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillParentMaxSize()
+                                    .background(colorBackground),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                LoadingAnimation()
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    text = "Loading Data From Server...",
+                                    fontSize = 20.sp,
+                                    textAlign = TextAlign.Center,
+                                    color = colorBlack
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
+
+                // when loading more
+                when (cryptoListFromApi.loadState.append) {
+                    is LoadState.Error -> {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Error while loading more data :/",
+                                    fontSize = 16.sp,
+                                    color = colorRed,
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    is LoadState.Loading -> {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                LoadingAnimation(circleSize = 16.dp)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Loading more... ",
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+        } else { // get data from local DB
+            viewModel.fetchCryptoListFromDB()
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    "No internet.. Loading from cache"
                 )
             }
-        }
-        else { // API has gotten its response [no matter 200 or NOT]
-            if (errorCallingApi.value!!) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "error in receiving date... \nSomething went wrong :(",
-                        fontSize = 32.sp, color = Purple40,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                LazyColumn {
-                    items(items = cryptoList!!) { crypto ->
-                        CryptoItem(crypto = crypto!!)
-                    }
-                    when (cryptoList.loadState.append) {
-                        is LoadState.Error -> {
-                            item {
-                                Column(
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colorBackground)
+            ) {
+                cryptoListFromCache.value?.let {
+                    if (it.isEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillParentMaxSize()
+                                    .background(colorBackground),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Text(
+                                    text = "No Cashed Data :/",
+                                    fontSize = 24.sp,
+                                    color = colorBlack,
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = "Error while loading more data...",
-                                        fontSize = 16.sp,
-                                        color = colorRed,
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
+                                        .fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
-
-                        is LoadState.Loading -> {
-                            item {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    LoadingAnimation(circleSize = 16.dp)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = "Loading more data... ",
-                                        fontSize = 16.sp,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                }
-                            }
-                        }
-
-                        else -> {}
-                    }
-                }
-            }
-        }
-            */
-        LazyColumn {
-            items(items = cryptoList!!) { crypto ->
-                CryptoItem(crypto = crypto!!)
-            }
-
-            // first loading
-            when (cryptoList.loadState.refresh) { //FIRST LOAD
-                is LoadState.Error -> {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillParentMaxSize()
-                                .background(Color.Gray),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(8.dp),
-                                text = "unable to find server",
-                                color = Color.Red,
-                                fontSize = 30.sp
-                            )
+                    } else {
+                        items(cryptoListFromCache.value!!) { crypto ->
+                            CryptoItem(crypto = crypto)
                         }
                     }
                 }
-                is LoadState.Loading -> { // Loading UI
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillParentMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(8.dp),
-                                text = "connectioning to server..."
-                            )
-
-                            CircularProgressIndicator(color = Color.Red)
-                        }
-                    }
-                }
-                else -> {}
-            }
-
-            // when loading more
-            when (cryptoList.loadState.append) {
-                is LoadState.Error -> {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Error while loading more data :/",
-                                fontSize = 16.sp,
-                                color = colorRed,
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-
-                is LoadState.Loading -> {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            LoadingAnimation(circleSize = 16.dp)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Loading more... ",
-                                fontSize = 16.sp,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-
-                else -> {}
             }
         }
     }
 }
+
+
 
 @Composable
 fun CryptoItem(crypto: Crypto) {
