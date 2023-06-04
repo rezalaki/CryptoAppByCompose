@@ -25,7 +25,7 @@ object ApiModule {
             .connectTimeout(Constants.DEFAULT_NETWORK_TIMEOUT_SECOND, TimeUnit.SECONDS)
             .writeTimeout(Constants.DEFAULT_NETWORK_TIMEOUT_SECOND, TimeUnit.SECONDS)
             .readTimeout(Constants.DEFAULT_NETWORK_TIMEOUT_SECOND, TimeUnit.SECONDS)
-//            .retryOnConnectionFailure(true)
+//            .retryOnConnectionFailure(true) // will be enabled in Release Mode
             .build()
 
     @Provides
