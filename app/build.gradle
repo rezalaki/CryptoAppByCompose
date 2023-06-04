@@ -50,6 +50,8 @@ android {
 }
 
 dependencies {
+    // Compose Navigation
+    implementation "androidx.navigation:navigation-compose:2.7.0-alpha01"
     // ViewModel - Lifecycles - LiveData
     implementation "androidx.compose.runtime:runtime-livedata:1.4.3"
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
