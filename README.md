@@ -7,7 +7,7 @@ I will update its UI soon :)
 
 ### screenshots
 ![screenshot-one](https://github.com/rezalaki/CryptoAppByCompose/blob/main/arts/one.jpg?raw=true)
-![screenshot-one](https://github.com/rezalaki/CryptoAppByCompose/blob/main/arts/two.jpg.png?raw=true)
+![screenshot-one](https://github.com/rezalaki/CryptoAppByCompose/blob/main/arts/two.jpg?raw=true)
 
 ### technologies
 + Kotlin
