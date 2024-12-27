@@ -1,5 +1,5 @@
 # CryptoAppByCompose
-This an android app which is developed via JetPackCompose very fast. It is an employment project that I completed in about 19 hours,
+This an android app which is developed via JetPackCompose very fast. It is an employment project(for Snowa Mobile Dev Team) that I completed in about 19 hours,
 while I knew only some basics of JetpackCompose UI. But my technical experiences helped me so much.
 \
 I will update its UI soon :)
